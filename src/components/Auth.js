@@ -5,6 +5,7 @@ import './Auth.css';
 export default function Auth({ onLogin }) {
   const [mode, setMode] = useState('login');
   const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -16,10 +17,11 @@ export default function Auth({ onLogin }) {
     try {
       const name = username.trim().toLowerCase();
       if (mode === 'create') {
-        await createUser(name, password);
+        await createUser(name, password, email.trim());
         setError('');
         setMode('login');
         setPassword('');
+        setEmail('');
       } else {
         const user = await findUser(name, password);
         if (!user) throw new Error('User not found or invalid password');
@@ -53,6 +55,16 @@ export default function Auth({ onLogin }) {
             required
             autoComplete="username"
           />
+          {mode === 'create' && (
+            <input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              autoComplete="email"
+            />
+          )}
           <input
             type="password"
             placeholder="Password"

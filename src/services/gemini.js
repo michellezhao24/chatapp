@@ -2,6 +2,8 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const genAI = new GoogleGenerativeAI(process.env.REACT_APP_GEMINI_API_KEY || '');
 
+const MODEL = 'gemini-2.0-flash';
+
 let cachedPrompt = null;
 
 async function loadSystemPrompt() {
@@ -17,16 +19,18 @@ async function loadSystemPrompt() {
 
 export const streamChat = async function* (history, newMessage, imageParts = []) {
   const systemInstruction = await loadSystemPrompt();
-  const model = genAI.getGenerativeModel({ model: 'gemini-3-pro-preview' });
+  const model = genAI.getGenerativeModel({ model: MODEL });
 
-  // Prepend system prompt to history (workaround: gemini-3-pro-preview rejects systemInstruction)
   const baseHistory = history.map((m) => ({
     role: m.role === 'user' ? 'user' : 'model',
     parts: [{ text: m.content }],
   }));
   const chatHistory = systemInstruction
     ? [
-        { role: 'user', parts: [{ text: `Follow these instructions in every response:\n\n${systemInstruction}` }] },
+        {
+          role: 'user',
+          parts: [{ text: `Follow these instructions in every response:\n\n${systemInstruction}` }],
+        },
         { role: 'model', parts: [{ text: "Got it! I'll follow those instructions." }] },
         ...baseHistory,
       ]
@@ -48,3 +52,4 @@ export const streamChat = async function* (history, newMessage, imageParts = [])
     if (text) yield text;
   }
 };
+

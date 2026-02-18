@@ -33,7 +33,43 @@ REACT_APP_MONGODB_URI=mongodb+srv://user:password@cluster.mongodb.net/
 2. Get your connection string (Database → Connect → Drivers).
 3. Put it in `.env` as `REACT_APP_MONGODB_URI`.
 
-The app creates the `chatapp` database and `users` and `messages` collections automatically on first use.
+All collections are created automatically on first use.
+
+### Database: `chatapp`
+
+#### Collection: `users`
+
+One document per registered user.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `_id` | ObjectId | Auto-generated |
+| `username` | string | Lowercase username |
+| `password` | string | bcrypt hash |
+| `email` | string | Email address (optional) |
+| `createdAt` | string | ISO timestamp |
+
+#### Collection: `sessions`
+
+One document per chat conversation.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `_id` | ObjectId | Auto-generated — used as `session_id` |
+| `username` | string | Owner of this chat |
+| `agent` | string | AI persona (e.g. `"lisa"`) |
+| `title` | string | Auto-generated name, e.g. `"Chat · Feb 18, 2:34 PM"` |
+| `createdAt` | string | ISO timestamp |
+| `messages` | array | Ordered list of messages (see below) |
+
+Each item in `messages`:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `role` | string | `"user"` or `"model"` |
+| `content` | string | Message text |
+| `timestamp` | string | ISO timestamp |
+| `imageData` | array | *(optional)* Base64 image attachments |
 
 ## Running the App
 
@@ -74,7 +110,7 @@ Use the app at **http://localhost:3000**. The React dev server proxies `/api` re
 ### Verify Backend
 
 - http://localhost:3001 – Server status page  
-- http://localhost:3001/api/status – JSON with `usersCount` and `messagesCount`
+- http://localhost:3001/api/status – JSON with `usersCount` and `sessionsCount`
 
 ## Features
 

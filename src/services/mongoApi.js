@@ -1,7 +1,3 @@
-/**
- * Calls backend API (uses REACT_APP_MONGODB_URI / MONGODB_URI)
- */
-
 const API = process.env.REACT_APP_API_URL || '';
 
 const api = async (path, options = {}) => {
@@ -14,10 +10,12 @@ const api = async (path, options = {}) => {
   return text ? JSON.parse(text) : {};
 };
 
-export const createUser = async (username, password) => {
+// ── Users ────────────────────────────────────────────────────────────────────
+
+export const createUser = async (username, password, email = '') => {
   await api('/api/users', {
     method: 'POST',
-    body: JSON.stringify({ username, password }),
+    body: JSON.stringify({ username, password, email }),
   });
 };
 
@@ -29,15 +27,39 @@ export const findUser = async (username, password) => {
   return data.ok ? { username: data.username } : null;
 };
 
-export const saveMessage = async (username, role, content, imageData = null) => {
-  const data = await api('/api/messages', {
-    method: 'POST',
-    body: JSON.stringify({ username, role, content, imageData }),
-  });
-  return data.id;
+// ── Sessions ─────────────────────────────────────────────────────────────────
+
+export const getSessions = async (username) => {
+  return api(`/api/sessions?username=${encodeURIComponent(username)}`);
 };
 
-export const loadMessages = async (username) => {
-  const msgs = await api(`/api/messages?username=${encodeURIComponent(username)}`);
-  return msgs;
+export const createSession = async (username, agent = null, title = null) => {
+  return api('/api/sessions', {
+    method: 'POST',
+    body: JSON.stringify({ username, agent, title }),
+  });
+};
+
+export const deleteSession = async (sessionId) => {
+  return api(`/api/sessions/${sessionId}`, { method: 'DELETE' });
+};
+
+export const updateSessionTitle = async (sessionId, title) => {
+  return api(`/api/sessions/${sessionId}/title`, {
+    method: 'PATCH',
+    body: JSON.stringify({ title }),
+  });
+};
+
+// ── Messages ─────────────────────────────────────────────────────────────────
+
+export const saveMessage = async (sessionId, role, content, imageData = null) => {
+  return api('/api/messages', {
+    method: 'POST',
+    body: JSON.stringify({ session_id: sessionId, role, content, imageData }),
+  });
+};
+
+export const loadMessages = async (sessionId) => {
+  return api(`/api/messages?session_id=${encodeURIComponent(sessionId)}`);
 };
