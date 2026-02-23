@@ -49,6 +49,8 @@ One document per registered user.
 | `username` | string | Lowercase username |
 | `password` | string | bcrypt hash |
 | `email` | string | Email address (optional) |
+| `firstName` | string | First name (optional) |
+| `lastName` | string | Last name (optional) |
 | `createdAt` | string | ISO timestamp |
 
 #### Collection: `sessions`
@@ -212,7 +214,7 @@ All packages are installed via `npm install`. Key dependencies:
 
 ## Features
 
-- **Create account / Login** – Username + password, hashed with bcrypt
+- **Create account / Login** – Username + password, first name, last name, and email; password hashed with bcrypt
 - **Session-based chat history** – Each conversation is a separate session; sidebar lists all chats with delete option
 - **Streaming Gemini responses** – Text streams in real time with animated "..." while thinking; Stop button to cancel
 - **Google Search grounding** – Answers include cited web sources for factual queries

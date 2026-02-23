@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&display=swap');
 
 * {
   box-sizing: border-box;
@@ -12,19 +12,14 @@ body {
 }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  /* Deep gradient background — glass panels float on top of this */
-  background: #0d1117;
-  background-image:
-    radial-gradient(ellipse at 20% 50%, rgba(99, 102, 241, 0.18) 0%, transparent 55%),
-    radial-gradient(ellipse at 80% 20%, rgba(139, 92, 246, 0.14) 0%, transparent 50%),
-    radial-gradient(ellipse at 60% 80%, rgba(59, 130, 246, 0.12) 0%, transparent 50%),
-    linear-gradient(160deg, #0d1117 0%, #131929 50%, #0d1230 100%);
+  /* Claymorphism — soft lavender gradient background */
+  background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 50%, #e9e5ff 100%);
   background-attachment: fixed;
-  color: rgba(255, 255, 255, 0.85);
+  color: #3730a3;
 }
 
 #root {
@@ -32,5 +27,5 @@ body {
 }
 
 code {
-  font-family: 'Fira Code', 'Cascadia Code', Consolas, monospace;
+  font-family: 'DM Sans', monospace;
 }

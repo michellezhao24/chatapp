@@ -47,7 +47,7 @@ app.get('/api/status', async (req, res) => {
 
 app.post('/api/users', async (req, res) => {
   try {
-    const { username, password, email } = req.body;
+    const { username, password, email, firstName, lastName } = req.body;
     if (!username || !password)
       return res.status(400).json({ error: 'Username and password required' });
     const name = String(username).trim().toLowerCase();
@@ -58,6 +58,8 @@ app.post('/api/users', async (req, res) => {
       username: name,
       password: hashed,
       email: email ? String(email).trim().toLowerCase() : null,
+      firstName: firstName ? String(firstName).trim() : null,
+      lastName: lastName ? String(lastName).trim() : null,
       createdAt: new Date().toISOString(),
     });
     res.json({ ok: true });

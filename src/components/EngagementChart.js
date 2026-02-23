@@ -9,23 +9,23 @@ import {
   ResponsiveContainer,
 } from 'recharts';
 
-const WITH_COLOR = '#818cf8';    // indigo-400
-const WITHOUT_COLOR = '#34d399'; // emerald-400
+const WITH_COLOR = '#8b5cf6';    // violet-500
+const WITHOUT_COLOR = '#a78bfa'; // violet-400
 
 function CustomTooltip({ active, payload, label }) {
   if (!active || !payload?.length) return null;
   return (
     <div style={{
-      background: 'rgba(15, 15, 35, 0.92)',
-      border: '1px solid rgba(255,255,255,0.12)',
+      background: 'linear-gradient(180deg, #f5f0e8 0%, #e8e0d5 100%)',
+      border: '2px solid #c4b8a8',
       borderRadius: 10,
       padding: '0.65rem 0.9rem',
       fontSize: '0.82rem',
       fontFamily: 'Inter, sans-serif',
-      color: '#e2e8f0',
-      boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+      color: '#5b21b6',
+      boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.9), 0 4px 16px rgba(139, 92, 246, 0.12)',
     }}>
-      <p style={{ margin: '0 0 0.4rem', fontWeight: 700, color: '#fff' }}>{label}</p>
+      <p style={{ margin: '0 0 0.4rem', fontWeight: 700, color: '#5b21b6' }}>{label}</p>
       {payload.map((p) => (
         <p key={p.dataKey} style={{ margin: '0.15rem 0', color: p.fill }}>
           {p.name}: <strong>{p.value.toLocaleString()}</strong>
@@ -61,31 +61,31 @@ export default function EngagementChart({ data, metricColumn = 'Favorite Count' 
         >
           <CartesianGrid
             strokeDasharray="3 3"
-            stroke="rgba(255,255,255,0.07)"
+            stroke="rgba(139, 92, 246, 0.2)"
             vertical={false}
           />
           <XAxis
             dataKey="name"
-            tick={{ fill: 'rgba(255,255,255,0.6)', fontSize: 11, fontFamily: 'Inter,sans-serif' }}
-            axisLine={{ stroke: 'rgba(255,255,255,0.12)' }}
+            tick={{ fill: '#7c3aed', fontSize: 11, fontFamily: 'DM Sans, sans-serif' }}
+            axisLine={{ stroke: 'rgba(139, 92, 246, 0.3)' }}
             tickLine={false}
             angle={-30}
             textAnchor="end"
             interval={0}
           />
           <YAxis
-            tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 11, fontFamily: 'Inter,sans-serif' }}
+            tick={{ fill: '#7c3aed', fontSize: 11, fontFamily: 'DM Sans, sans-serif' }}
             axisLine={false}
             tickLine={false}
             width={55}
           />
-          <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.04)' }} />
+          <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(139, 92, 246, 0.06)' }} />
           <Legend
             wrapperStyle={{
               paddingTop: 12,
               fontSize: 12,
-              fontFamily: 'Inter,sans-serif',
-              color: 'rgba(255,255,255,0.65)',
+              fontFamily: 'DM Sans, sans-serif',
+              color: '#7c3aed',
             }}
           />
           <Bar dataKey="withKeyword" name="With keyword" fill={WITH_COLOR} radius={[5, 5, 0, 0]} />
