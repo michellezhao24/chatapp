@@ -24,7 +24,13 @@ export const findUser = async (username, password) => {
     method: 'POST',
     body: JSON.stringify({ username, password }),
   });
-  return data.ok ? { username: data.username } : null;
+  return data.ok
+    ? {
+        username: data.username,
+        firstName: data.firstName || null,
+        lastName: data.lastName || null,
+      }
+    : null;
 };
 
 // ── Sessions ─────────────────────────────────────────────────────────────────

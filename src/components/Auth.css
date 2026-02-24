@@ -54,6 +54,21 @@
   opacity: 0.8;
 }
 
+.auth-label {
+  display: block;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #5b21b6;
+  margin-bottom: 0.35rem;
+  margin-top: 0.5rem;
+}
+
+.auth-label:first-of-type,
+.auth-form .auth-label:first-child {
+  margin-top: 0;
+}
+
 .auth-form input {
   width: 100%;
   padding: 0.95rem 1.1rem;

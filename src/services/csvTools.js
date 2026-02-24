@@ -63,6 +63,103 @@ export const CSV_TOOL_DECLARATIONS = [
       required: ['sort_column'],
     },
   },
+  {
+    name: 'plot_metric_vs_time',
+    description:
+      'Plot any numeric field (views, likes, comments, viewCount, likeCount, etc.) vs time for channel videos. ' +
+      'The plot is rendered as a React chart component directly in the chat — click to enlarge, download as PNG. ' +
+      'Use when the user asks to visualize how a metric changes over time, e.g. "plot views over time" or "show likes vs date". ' +
+      'Requires a date/time column (e.g. publishedAt, createdAt, date) and a numeric metric column. ' + COL_NOTE,
+    parameters: {
+      type: 'OBJECT',
+      properties: {
+        metric_column: {
+          type: 'STRING',
+          description: 'Exact column name for the numeric metric to plot (views, likes, comments, viewCount, etc.). ' + COL_NOTE,
+        },
+        date_column: {
+          type: 'STRING',
+          description: 'Exact column name for the date/time field. Common names: publishedAt, createdAt, date, timestamp. ' + COL_NOTE,
+        },
+      },
+      required: ['metric_column', 'date_column'],
+    },
+  },
+  {
+    name: 'play_video',
+    description:
+      'Open a video from the channel data in a new tab. Use when the user wants to play, watch, or open a video. ' +
+      'NEVER ask the user for the URL — always look up the video from the loaded channel data. ' +
+      'User can specify by title (search_by_title), ordinal (ordinal: 1 = first video), or most viewed (most_viewed: true). ' +
+      'When user says "play the asbestos video": pass search_by_title: "asbestos". ' +
+      'When user says "play the most viewed video": pass most_viewed: true. ' +
+      'When user says "play the first video": pass ordinal: 1.',
+    parameters: {
+      type: 'OBJECT',
+      properties: {
+        video_url: {
+          type: 'STRING',
+          description: 'Full video URL or YouTube video ID. Use when you have it from the data. Omit if using search_by_title, most_viewed, or ordinal.',
+        },
+        search_by_title: {
+          type: 'STRING',
+          description: 'Keyword to search for in video titles (e.g. "asbestos"). Use when user says "play the X video".',
+        },
+        most_viewed: {
+          type: 'BOOLEAN',
+          description: 'If true, play the video with the highest view count. Use when user says "play the most viewed video".',
+        },
+        ordinal: {
+          type: 'NUMBER',
+          description: 'Play the Nth video (1 = first, 2 = second, etc.). Use when user says "play the first video" or "play the 3rd video".',
+        },
+        title: {
+          type: 'STRING',
+          description: 'Video title for the clickable card display.',
+        },
+        thumbnail_url: {
+          type: 'STRING',
+          description: 'URL of the video thumbnail image for the card.',
+        },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'compute_stats_json',
+    description:
+      'Compute mean, median, std, min, max for any numeric field in channel JSON/CSV data. ' +
+      'Works on flat or nested field paths (e.g. "viewCount" or "stats.views"). ' +
+      'Use when the user asks for statistics on a numeric column. ' + COL_NOTE,
+    parameters: {
+      type: 'OBJECT',
+      properties: {
+        field: {
+          type: 'STRING',
+          description: 'Exact field/column name for the numeric values. Use the exact name from [CSV columns: ...].',
+        },
+      },
+      required: ['field'],
+    },
+  },
+  {
+    name: 'generateImage',
+    description:
+      'Generate an image from a text prompt, optionally using an anchor/reference image. ' +
+      'Use when the user asks to create, generate, or draw an image. ' +
+      'CRITICAL: Pass a DETAILED prompt with comma-separated descriptors (e.g. "professional editorial photography, man in navy blue suit, Paris street, Eiffel Tower background, golden hour lighting, high fashion"). ' +
+      'Include all specific details the user requested: location, clothing, style, lighting, mood. Do NOT use short vague prompts.',
+    parameters: {
+      type: 'OBJECT',
+      properties: {
+        prompt: {
+          type: 'STRING',
+          description: 'Detailed description of the desired image. Use comma-separated descriptors. Example: "professional photography, woman in red dress, Tokyo street at night, neon lights, cinematic, 8k"',
+        },
+      },
+      required: ['prompt'],
+    },
+  },
 ];
 
 // ── Parse a CSV line, respecting quoted fields ────────────────────────────────
@@ -255,20 +352,26 @@ export const computeDatasetSummary = (rows, headers) => {
 };
 
 // ── Client-side tool executor ─────────────────────────────────────────────────
+// Returns a Promise for async tools (generateImage), plain object for sync tools.
 
-export const executeTool = (toolName, args, rows) => {
-  const availableHeaders = rows.length ? Object.keys(rows[0]) : [];
+const API = process.env.REACT_APP_API_URL || '';
+
+export const executeTool = async (toolName, args, rows, attachedImages = []) => {
+  const safeRows = Array.isArray(rows) ? rows : [];
+  const safeImages = Array.isArray(attachedImages) ? attachedImages : [];
+  const firstRow = safeRows.length > 0 ? safeRows[0] : null;
+  const availableHeaders = firstRow && typeof firstRow === 'object' ? Object.keys(firstRow) : [];
   console.group(`[CSV Tool] ${toolName}`);
   console.log('args:', args);
-  console.log('rows loaded:', rows.length);
+  console.log('rows loaded:', safeRows.length);
   console.log('available headers:', availableHeaders);
   console.groupEnd();
 
   switch (toolName) {
     case 'compute_column_stats': {
-      const col = resolveCol(rows, args.column);
+      const col = resolveCol(safeRows, args.column);
       console.log(`[compute_column_stats] resolved column: "${args.column}" → "${col}"`);
-      const vals = numericValues(rows, col);
+      const vals = numericValues(safeRows, col);
       if (!vals.length)
         return { error: `No numeric values found in column "${col}". Available columns: ${availableHeaders.join(', ')}` };
       const mean = vals.reduce((a, b) => a + b, 0) / vals.length;
@@ -286,11 +389,11 @@ export const executeTool = (toolName, args, rows) => {
     }
 
     case 'get_value_counts': {
-      const col = resolveCol(rows, args.column);
+      const col = resolveCol(safeRows, args.column);
       console.log(`[get_value_counts] resolved column: "${args.column}" → "${col}"`);
       const topN = args.top_n || 10;
       const counts = {};
-      rows.forEach((r) => {
+      safeRows.forEach((r) => {
         const v = r[col];
         if (v !== undefined && v !== '') counts[v] = (counts[v] || 0) + 1;
       });
@@ -299,13 +402,13 @@ export const executeTool = (toolName, args, rows) => {
         .slice(0, topN);
       return {
         column: col,
-        total_rows: rows.length,
+        total_rows: safeRows.length,
         value_counts: Object.fromEntries(sorted),
       };
     }
 
     case 'get_top_tweets': {
-      const sortCol = resolveCol(rows, args.sort_column) || args.sort_column;
+      const sortCol = resolveCol(safeRows, args.sort_column) || args.sort_column;
       console.log(`[get_top_tweets] sort="${sortCol}" n=${args.n} asc=${args.ascending}`);
       const n   = args.n || 10;
       const asc = args.ascending ?? false;
@@ -320,7 +423,7 @@ export const executeTool = (toolName, args, rows) => {
       const viewCol = availableHeaders.find((h) => /view.?count/i.test(h));
       const engCol  = availableHeaders.includes('engagement') ? 'engagement' : null;
 
-      const sorted = [...rows].sort((a, b) => {
+      const sorted = [...safeRows].sort((a, b) => {
         const av = parseFloat(a[sortCol]);
         const bv = parseFloat(b[sortCol]);
         if (!isNaN(av) && !isNaN(bv)) return asc ? av - bv : bv - av;
@@ -345,6 +448,172 @@ export const executeTool = (toolName, args, rows) => {
         count: topRows.length,
         tweets: topRows,
       };
+    }
+
+    case 'plot_metric_vs_time': {
+      if (!safeRows.length)
+        return { error: 'No channel data loaded. Please drag and drop a JSON file with your YouTube channel data first, then ask to plot.' };
+      const metricCol = resolveCol(safeRows, args.metric_column);
+      const dateCol = resolveCol(safeRows, args.date_column);
+      const vals = safeRows
+        .map((r) => {
+          const dateVal = r[dateCol];
+          const numVal = parseFloat(r[metricCol]);
+          if (!dateVal || isNaN(numVal)) return null;
+          const d = new Date(dateVal);
+          if (isNaN(d.getTime())) return null;
+          return { date: dateVal, parsed: d.getTime(), value: numVal };
+        })
+        .filter(Boolean);
+      if (!vals.length)
+        return { error: `No valid date+metric pairs. Check columns "${metricCol}" and "${dateCol}". Available: ${availableHeaders.join(', ')}` };
+      vals.sort((a, b) => a.parsed - b.parsed);
+      const chartData = vals.map((v) => ({
+        date: v.date,
+        value: v.value,
+        label: new Date(v.parsed).toLocaleDateString([], { month: 'short', day: 'numeric', year: '2-digit' }),
+      }));
+      return {
+        _chartType: 'metric_vs_time',
+        data: chartData,
+        metricColumn: metricCol,
+        dateColumn: dateCol,
+      };
+    }
+
+    case 'play_video': {
+      let url = String(args.video_url || '').trim();
+      let displayTitle = args.title || 'Watch video';
+      let thumbnailUrl = args.thumbnail_url || null;
+
+      const titleCol =
+        availableHeaders.find((h) => /^title$/i.test(h)) ||
+        availableHeaders.find((h) => /title|name|videoTitle|text/i.test(h));
+      const urlCol =
+        availableHeaders.find((h) => /^videoUrl$/i.test(h)) ||
+        availableHeaders.find((h) => /videoUrl|video_url|url/i.test(h));
+      const idCol =
+        availableHeaders.find((h) => /^videoId$/i.test(h)) ||
+        availableHeaders.find((h) => /videoId|video_id|id/i.test(h));
+      const viewCol =
+        availableHeaders.find((h) => /^viewCount$/i.test(h)) ||
+        availableHeaders.find((h) => /viewCount|view.?count|views/i.test(h));
+      const thumbCol = availableHeaders.find((h) => /thumbnail/i.test(h));
+
+      const pickMatch = (match) => {
+        if (!match) return;
+        const rawUrl = match[urlCol] || match[idCol];
+        if (rawUrl) {
+          url = String(rawUrl).trim();
+          displayTitle = (titleCol && match[titleCol]) ? String(match[titleCol]) : displayTitle;
+          if (thumbCol && match[thumbCol]) thumbnailUrl = String(match[thumbCol]);
+        }
+      };
+
+      if (!url && args.search_by_title) {
+        const searchTerm = String(args.search_by_title).trim().toLowerCase();
+        if (!searchTerm) return { error: 'search_by_title cannot be empty' };
+        if (!titleCol)
+          return { error: 'No title column found in channel data. Available: ' + availableHeaders.join(', ') };
+        const match = safeRows.find((r) => {
+          const t = String(r[titleCol] || '').toLowerCase();
+          return t.includes(searchTerm);
+        });
+        if (!match)
+          return { error: `No video found with "${args.search_by_title}" in the title. Try a different keyword.` };
+        pickMatch(match);
+      } else if (!url && args.most_viewed) {
+        if (!viewCol)
+          return { error: 'No view count column found. Available: ' + availableHeaders.join(', ') };
+        const sorted = [...safeRows].sort((a, b) => {
+          const av = parseFloat(a[viewCol]) || 0;
+          const bv = parseFloat(b[viewCol]) || 0;
+          return bv - av;
+        });
+        pickMatch(sorted[0]);
+      } else if (!url && typeof args.ordinal === 'number' && args.ordinal >= 1) {
+        const idx = Math.floor(args.ordinal) - 1;
+        const match = safeRows[idx];
+        if (!match)
+          return { error: `There is no ${args.ordinal}${args.ordinal === 1 ? 'st' : args.ordinal === 2 ? 'nd' : args.ordinal === 3 ? 'rd' : 'th'} video. Only ${safeRows.length} video(s) in the data.` };
+        pickMatch(match);
+      }
+
+      if (!url) return { error: 'Provide video_url, search_by_title, most_viewed: true, or ordinal to find the video in the loaded data.' };
+      if (!/^https?:\/\//i.test(url)) {
+        url = `https://www.youtube.com/watch?v=${url}`;
+      }
+      return {
+        _openUrl: url,
+        title: displayTitle,
+        thumbnailUrl,
+      };
+    }
+
+    case 'compute_stats_json': {
+      const field = resolveCol(safeRows, args.field);
+      const vals = numericValues(safeRows, field);
+      if (!vals.length)
+        return { error: `No numeric values in field "${field}". Available: ${availableHeaders.join(', ')}` };
+      const mean = vals.reduce((a, b) => a + b, 0) / vals.length;
+      const sorted = [...vals].sort((a, b) => a - b);
+      const variance = vals.reduce((a, b) => a + (b - mean) ** 2, 0) / vals.length;
+      return {
+        field,
+        count: vals.length,
+        mean: fmt(mean),
+        median: fmt(median(sorted)),
+        std: fmt(Math.sqrt(variance)),
+        min: Math.min(...vals),
+        max: Math.max(...vals),
+      };
+    }
+
+    case 'generateImage': {
+      try {
+        const anchorBase64 = safeImages[0] && safeImages[0].data ? safeImages[0].data : null;
+        const mimeType = safeImages[0]?.mimeType || 'image/jpeg';
+        let res;
+        if (anchorBase64) {
+          try {
+            const form = new FormData();
+            form.append('prompt', args.prompt || '');
+            let raw = String(anchorBase64).replace(/^data:image\/\w+;base64,/, '').replace(/\s/g, '');
+            const pad = raw.length % 4;
+            if (pad) raw += '='.repeat(4 - pad);
+            const bin = Uint8Array.from(atob(raw), (c) => c.charCodeAt(0));
+            const blobType = mimeType.startsWith('image/') ? mimeType : 'image/jpeg';
+            form.append('anchor_image', new Blob([bin], { type: blobType }), 'anchor.jpg');
+            res = await fetch(`${API}/api/generate-image`, { method: 'POST', body: form });
+          } catch (formErr) {
+            res = await fetch(`${API}/api/generate-image`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ prompt: args.prompt }),
+            });
+          }
+        } else {
+          res = await fetch(`${API}/api/generate-image`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt: args.prompt }),
+          });
+        }
+        const text = await res.text();
+        let data;
+        try {
+          data = text ? JSON.parse(text) : {};
+        } catch (parseErr) {
+          return { error: `Server returned invalid response (${res.status}). Try again or use text-only generation.` };
+        }
+        if (!res.ok) return { error: data.error || 'Image generation failed' };
+        if (data.image_base64) {
+          return { _chartType: 'generated_image', mimeType: data.mimeType || 'image/png', data: data.image_base64 };
+        }
+        return { error: 'No image returned from server' };
+      } catch (err) {
+        return { error: `Image generation failed: ${err.message}` };
+      }
     }
 
     default:

@@ -40,19 +40,16 @@ function CustomTooltip({ active, payload, label }) {
   );
 }
 
-export default function EngagementChart({ data, metricColumn = 'Favorite Count' }) {
-  console.log('[EngagementChart] render called, data:', data);
-  if (!data?.length) {
-    console.warn('[EngagementChart] no data — chart will not render');
-    return null;
-  }
+export default function EngagementChart({ data, metricColumn = 'Favorite Count', enlarged = false }) {
+  if (!data?.length) return null;
+  const chartHeight = enlarged ? 550 : 300;
 
   return (
     <div className="engagement-chart-wrap">
       <p className="engagement-chart-label">
         Mean {metricColumn} — with vs without keyword
       </p>
-      <ResponsiveContainer width="100%" height={300}>
+      <ResponsiveContainer width="100%" height={chartHeight}>
         <BarChart
           data={data}
           margin={{ top: 8, right: 16, left: 0, bottom: 64 }}

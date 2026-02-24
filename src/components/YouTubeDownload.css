@@ -1,0 +1,115 @@
+.youtube-download {
+  padding: 2rem;
+  max-width: 560px;
+}
+
+.youtube-download-title {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #5b21b6;
+  margin: 0 0 0.5rem;
+}
+
+.youtube-download-desc {
+  font-size: 0.9rem;
+  color: #7c3aed;
+  opacity: 0.9;
+  margin: 0 0 1.5rem;
+  line-height: 1.5;
+}
+
+.youtube-download-form input[type='url'] {
+  width: 100%;
+  padding: 0.9rem 1rem;
+  margin-bottom: 1rem;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(139, 92, 246, 0.25);
+  border-radius: 20px;
+  font-size: 0.95rem;
+  font-family: 'DM Sans', sans-serif;
+  color: #3730a3;
+}
+
+.youtube-download-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.youtube-download-row label {
+  font-size: 0.9rem;
+  color: #5b21b6;
+}
+
+.youtube-download-row input[type='number'] {
+  width: 70px;
+  padding: 0.5rem;
+  margin-left: 0.5rem;
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 12px;
+}
+
+.youtube-download-row button {
+  padding: 0.75rem 1.5rem;
+  background: linear-gradient(145deg, #a78bfa 0%, #8b5cf6 50%, #7c3aed 100%);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 20px;
+  color: #fff;
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(139, 92, 246, 0.3);
+}
+
+.youtube-download-row button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.youtube-download-progress {
+  margin-top: 1.5rem;
+}
+
+.youtube-progress-bar {
+  height: 8px;
+  background: rgba(139, 92, 246, 0.2);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.youtube-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #8b5cf6, #a78bfa);
+  transition: width 0.3s ease;
+}
+
+.youtube-progress-msg {
+  font-size: 0.85rem;
+  color: #7c3aed;
+}
+
+.youtube-download-error {
+  color: #dc2626;
+  font-size: 0.9rem;
+  margin-top: 1rem;
+}
+
+.youtube-download-link {
+  display: inline-block;
+  margin-top: 1rem;
+  padding: 0.6rem 1.2rem;
+  background: rgba(139, 92, 246, 0.15);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 16px;
+  color: #7c3aed;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background 0.2s;
+}
+
+.youtube-download-link:hover {
+  background: rgba(139, 92, 246, 0.25);
+}

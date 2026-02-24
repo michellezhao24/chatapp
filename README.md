@@ -18,6 +18,8 @@ Create a `.env` file in the project root with:
 | `REACT_APP_GEMINI_API_KEY` | Yes | Frontend (baked in at build) | Google Gemini API key. Get one at [Google AI Studio](https://aistudio.google.com/apikey). |
 | `REACT_APP_MONGODB_URI` | Yes | Backend | MongoDB Atlas connection string. Format: `mongodb+srv://USER:PASSWORD@CLUSTER.mongodb.net/` |
 | `REACT_APP_API_URL` | Production only | Frontend (baked in at build) | Full URL of the backend, e.g. `https://your-backend.onrender.com`. Leave blank for local dev (proxy handles it). |
+| `REPLICATE_API_TOKEN` | For image gen | Backend | Replicate API token for `generateImage` tool. Get at [Replicate](https://replicate.com/account/api-tokens). |
+| `YOUTUBE_API_KEY` | For YouTube download | Backend | YouTube Data API key for the YouTube Channel Download tab. Get at [Google Cloud Console](https://console.cloud.google.com/apis/credentials). |
 
 The backend also accepts `MONGODB_URI` or `REACT_APP_MONGO_URI` as the MongoDB connection string if you prefer those names.
 
@@ -174,6 +176,15 @@ This starts:
 
 Use the app at **http://localhost:3000**. The React dev server proxies `/api` requests to the backend.
 
+### Pre-download Veritasium channel data (optional)
+
+To pre-populate the public folder with sample YouTube channel data:
+
+1. Add `YOUTUBE_API_KEY` to `.env` (get one at [Google Cloud Console](https://console.cloud.google.com/apis/credentials)).
+2. Run: `npm run download-veritasium`
+
+This downloads 10 videos from https://www.youtube.com/@veritasium and saves them to `public/veritasium-channel-data.json`.
+
 ### Verify Backend
 
 - http://localhost:3001 – Server status page  
@@ -221,10 +232,16 @@ All packages are installed via `npm install`. Key dependencies:
 - **Python code execution** – Gemini writes and runs Python for plots, regression, histogram, scatter, and any analysis the JS tools can't handle
 - **CSV upload** – Drag-and-drop or click to attach a CSV; a slim version of the data (key columns as plain text) plus a full statistical summary are sent to Gemini automatically
 - **Auto-computed engagement column** – When a CSV has `Favorite Count` and `View Count` columns, an `engagement` ratio (Favorite Count / View Count) is added automatically to every row
-- **Client-side data analysis tools** – Fast, zero-cost function-calling tools that run in the browser. Gemini calls these automatically for data questions; results are saved to MongoDB alongside the message:
+- **Client-side Chat Tools** – Fast function-calling tools. Gemini calls these automatically; results are saved to MongoDB:
   - `compute_column_stats(column)` – mean, median, std, min, max, count for any numeric column
   - `get_value_counts(column, top_n)` – frequency count of each unique value in a categorical column
-  - `get_top_tweets(sort_column, n, ascending)` – top or bottom N tweets sorted by any metric (including `engagement`), with tweet text and key metrics
+  - `get_top_tweets(sort_column, n, ascending)` – top or bottom N tweets sorted by any metric (including `engagement`)
+  - `plot_metric_vs_time(metric_column, date_column)` – plot any numeric field (views, likes, etc.) vs time for channel videos
+  - `play_video(video_url, title)` – open a video from channel data in a new tab
+  - `compute_stats_json(field)` – mean, median, std, min, max for any numeric field in channel JSON
+  - `generateImage(prompt, anchor_image_base64)` – image generation from text prompt (requires `REPLICATE_API_TOKEN`)
+- **YouTube Channel Download** – Tab to download channel metadata (title, description, transcript, duration, views, likes, comments) for up to 100 videos. Saves to a JSON file. Requires `YOUTUBE_API_KEY`.
+- **JSON in chat** – Drag-and-drop JSON files (e.g. from YouTube download) into the chat; the AI can analyze them with tools.
 - **Tool routing logic** – The app automatically routes requests: client-side JS tools for simple stats, Python code execution for plots and complex models, Google Search for factual queries
 - **Markdown rendering** – AI responses render headers, lists, code blocks, tables, and links
 - **Image support** – Attach images via drag-and-drop, the 📎 button, or paste from clipboard (Ctrl+V)

@@ -33,8 +33,19 @@ async function loadSystemPrompt() {
 // useCodeExecution: pass true to use codeExecution tool (CSV/analysis),
 //                   false (default) to use googleSearch tool.
 // Note: Gemini does not support both tools simultaneously.
-export const streamChat = async function* (history, newMessage, imageParts = [], useCodeExecution = false) {
-  const systemInstruction = await loadSystemPrompt();
+function buildSystemInstruction(basePrompt, userContext) {
+  let instruction = basePrompt;
+  if (userContext?.firstName || userContext?.lastName) {
+    const fullName = [userContext.firstName, userContext.lastName].filter(Boolean).join(' ');
+    const firstName = userContext.firstName || 'there';
+    instruction += `\n\nPERSONALIZATION — The user you are talking to is ${fullName || firstName}. In your first response, always greet them by name (e.g. "Hey ${firstName}!" or "Hi ${firstName}!"). Use their name naturally throughout the conversation when it feels appropriate.`;
+  }
+  return instruction;
+}
+
+export const streamChat = async function* (history, newMessage, imageParts = [], useCodeExecution = false, userContext = null) {
+  const basePrompt = await loadSystemPrompt();
+  const systemInstruction = buildSystemInstruction(basePrompt, userContext);
   const tools = useCodeExecution ? [CODE_EXEC_TOOL] : [SEARCH_TOOL];
   const model = genAI.getGenerativeModel({
     model: MODEL,
@@ -128,8 +139,9 @@ export const streamChat = async function* (history, newMessage, imageParts = [],
 // executeFn(toolName, args) → plain JS object with the result
 // Returns the final text response from the model.
 
-export const chatWithCsvTools = async (history, newMessage, csvHeaders, executeFn) => {
-  const systemInstruction = await loadSystemPrompt();
+export const chatWithCsvTools = async (history, newMessage, csvHeaders, executeFn, userContext = null, imageParts = []) => {
+  const basePrompt = await loadSystemPrompt();
+  const systemInstruction = buildSystemInstruction(basePrompt, userContext);
   const model = genAI.getGenerativeModel({
     model: MODEL,
     tools: [{ functionDeclarations: CSV_TOOL_DECLARATIONS }],
@@ -158,7 +170,17 @@ export const chatWithCsvTools = async (history, newMessage, csvHeaders, executeF
     ? `[CSV columns: ${csvHeaders.join(', ')}]\n\n${newMessage}`
     : newMessage;
 
-  let response = (await chat.sendMessage(msgWithContext)).response;
+  const safeImageParts = Array.isArray(imageParts) ? imageParts : [];
+  const messageParts = [
+    { text: msgWithContext },
+    ...safeImageParts
+      .filter((img) => img && (img.data || img.mimeType))
+      .map((img) => ({
+        inlineData: { mimeType: img.mimeType || 'image/png', data: img.data || '' },
+      })),
+  ].filter((p) => p.text !== undefined || p.inlineData !== undefined);
+
+  let response = (await chat.sendMessage(messageParts)).response;
 
   // Accumulate chart payloads and a log of every tool call made
   const charts = [];
@@ -172,7 +194,7 @@ export const chatWithCsvTools = async (history, newMessage, csvHeaders, executeF
 
     const { name, args } = funcCall.functionCall;
     console.log('[CSV Tool]', name, args);
-    const toolResult = executeFn(name, args);
+    const toolResult = await Promise.resolve(executeFn(name, args));
     console.log('[CSV Tool result]', toolResult);
 
     // Log the call for persistence
@@ -183,9 +205,14 @@ export const chatWithCsvTools = async (history, newMessage, csvHeaders, executeF
       charts.push(toolResult);
     }
 
+    // Send slim result to Gemini for generateImage — full base64 would cause stream errors
+    const resultForGemini = (name === 'generateImage' && toolResult?._chartType === 'generated_image')
+      ? { success: true, message: 'The image has been generated and is displayed below.' }
+      : toolResult;
+
     response = (
       await chat.sendMessage([
-        { functionResponse: { name, response: { result: toolResult } } },
+        { functionResponse: { name, response: { result: resultForGemini } } },
       ])
     ).response;
   }

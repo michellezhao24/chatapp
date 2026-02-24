@@ -13,22 +13,29 @@
     "cors": "^2.8.6",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
+    "googleapis": "^171.4.0",
+    "html2canvas": "^1.4.1",
     "mongodb": "^7.1.0",
+    "multer": "^2.0.2",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-markdown": "^6.0.3",
     "react-scripts": "5.0.1",
     "recharts": "^3.7.0",
     "remark-gfm": "^1.0.0",
-    "web-vitals": "^2.1.4"
+    "replicate": "^1.4.0",
+    "sharp": "^0.34.5",
+    "web-vitals": "^2.1.4",
+    "youtube-transcript": "^1.2.1"
   },
   "scripts": {
-    "start": "concurrently \"npm run server\" \"npm run client\"",
+    "start": "node node_modules/concurrently/dist/bin/concurrently.js \"npm run server\" \"npm run client\"",
     "server": "node server/index.js",
     "client": "node node_modules/react-scripts/bin/react-scripts.js start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "download-veritasium": "node scripts/download-veritasium.js"
   },
   "proxy": "http://localhost:3001",
   "eslintConfig": {

@@ -29,7 +29,7 @@ export default function Auth({ onLogin }) {
       } else {
         const user = await findUser(name, password);
         if (!user) throw new Error('User not found or invalid password');
-        onLogin(user.username);
+        onLogin(user);
       }
     } catch (err) {
       try {
@@ -61,6 +61,7 @@ export default function Auth({ onLogin }) {
           />
           {mode === 'create' && (
             <>
+              <label className="auth-label">First Name</label>
               <input
                 type="text"
                 placeholder="First name"
@@ -69,6 +70,7 @@ export default function Auth({ onLogin }) {
                 required
                 autoComplete="given-name"
               />
+              <label className="auth-label">Last Name</label>
               <input
                 type="text"
                 placeholder="Last name"
@@ -77,6 +79,7 @@ export default function Auth({ onLogin }) {
                 required
                 autoComplete="family-name"
               />
+              <label className="auth-label">Email</label>
               <input
                 type="email"
                 placeholder="Email"
